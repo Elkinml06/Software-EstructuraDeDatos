@@ -8,6 +8,7 @@ interface ParkingRates {
     hour: number; 
     monthly: number;
     daily: number;
+    event: number;
   };
   car: { 
     min15: number; 
@@ -16,6 +17,7 @@ interface ParkingRates {
     hour: number; 
     monthly: number;
     daily: number;
+    event: number;
   };
 }
 
@@ -25,7 +27,7 @@ interface VehicleRateCardProps {
   isEditing: boolean;
   onRateChange: (
     vehicle: "moto" | "car",
-    field: "min15" | "min30" | "min45" | "hour" | "monthly" | "daily",
+    field: "min15" | "min30" | "min45" | "hour" | "monthly" | "daily" | "event",
     value: string
   ) => void;
 }
@@ -95,6 +97,13 @@ const VehicleRateCard: FC<VehicleRateCardProps> = ({
           value={vehicleRates.monthly}
           isEditing={isEditing}
           onChange={(value) => onRateChange(vehicleType, "monthly", value)}
+        />
+
+        <RateInput
+          label="Evento (3h)"
+          value={vehicleRates.event}
+          isEditing={isEditing}
+          onChange={(value) => onRateChange(vehicleType, "event", value)}
         />
       </div>
     </div>

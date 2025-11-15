@@ -13,6 +13,7 @@ interface ParkingRates {
     hour: number; 
     monthly: number;
     daily: number;
+    event: number;
   };
   car: { 
     min15: number; 
@@ -21,6 +22,7 @@ interface ParkingRates {
     hour: number; 
     monthly: number;
     daily: number;
+    event: number;
   };
 }
 
@@ -29,14 +31,18 @@ const ConfigurationDashboard: FC<ConfigurationProps> = ({ onLogout }) => {
     const saved = localStorage.getItem("parkingRates");
     if (saved) {
       try {
-        return JSON.parse(saved);
+        const parsed = JSON.parse(saved);
+        return {
+          moto: { min30: parsed.moto.min30, hour: parsed.moto.hour, monthly: parsed.moto.monthly, daily: parsed.moto.daily, event: parsed.moto.event ?? 3000 },
+          car: { min15: parsed.car.min15, min30: parsed.car.min30, min45: parsed.car.min45, hour: parsed.car.hour, monthly: parsed.car.monthly, daily: parsed.car.daily, event: parsed.car.event ?? 8000 },
+        };
       } catch (e) {
         // Si el JSON está corrupto, usar valores por defecto
       }
     }
     return {
-      moto: { min30: 1000, hour: 1300, monthly: 60000, daily: 15000 },
-      car: { min15: 1600, min30: 2400, min45: 2800, hour: 3200, monthly: 100000, daily: 25000 },
+      moto: { min30: 1000, hour: 1300, monthly: 60000, daily: 15000, event: 3000 },
+      car: { min15: 1600, min30: 2400, min45: 2800, hour: 3200, monthly: 100000, daily: 25000, event: 8000 },
     };
   });
 
@@ -62,7 +68,7 @@ const ConfigurationDashboard: FC<ConfigurationProps> = ({ onLogout }) => {
 
   const handleRateChange = (
     vehicle: "moto" | "car",
-    field: "min15" | "min30" | "min45" | "hour" | "monthly" | "daily",
+    field: "min15" | "min30" | "min45" | "hour" | "monthly" | "daily" | "event",
     value: string
   ) => {
     // Convertir el valor a número, permitir 0 como valor válido
@@ -76,6 +82,28 @@ const ConfigurationDashboard: FC<ConfigurationProps> = ({ onLogout }) => {
 
   const toggleEdit = () => {
     setIsEditing((prev) => !prev);
+  };
+
+  const [eventActiveToday, setEventActiveToday] = useState(false);
+
+  const getDateKey = (d = new Date()) => {
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, "0");
+    const day = String(d.getDate()).padStart(2, "0");
+    return `${y}-${m}-${day}`;
+  };
+
+  useEffect(() => {
+    const key = localStorage.getItem("eventActiveDateKey");
+    setEventActiveToday(key === getDateKey());
+  }, []);
+
+  const toggleEventActive = () => {
+    setEventActiveToday((prev) => {
+      const next = !prev;
+      localStorage.setItem("eventActiveDateKey", next ? getDateKey() : "");
+      return next;
+    });
   };
 
   return (
@@ -108,14 +136,29 @@ const ConfigurationDashboard: FC<ConfigurationProps> = ({ onLogout }) => {
                   onRateChange={handleRateChange}
                 />
                 
-                <VehicleRateCard
-                  vehicleType="car"
-                  rates={rates}
-                  isEditing={isEditing}
-                  onRateChange={handleRateChange}
-                />
-              </div>
+              <VehicleRateCard
+                vehicleType="car"
+                rates={rates}
+                isEditing={isEditing}
+                onRateChange={handleRateChange}
+              />
             </div>
+            <div className="mt-6 p-4 rounded-lg border" style={{ borderColor: "var(--color-gray-200)", backgroundColor: "var(--color-gray-50)" }}>
+              <p className="text-sm" style={{ color: "var(--color-text-dark)" }}>
+                En Registro, escriba <span className="font-semibold">0101</span> para reimprimir la última factura.
+              </p>
+            </div>
+            <div className="mt-6 p-4 rounded-lg border flex items-center justify-between" style={{ borderColor: "var(--color-gray-200)" }}>
+              <div>
+                <p className="text-sm font-medium" style={{ color: "var(--color-text-dark)" }}>Día especial / Evento activo hoy</p>
+                <p className="text-xs" style={{ color: "var(--color-text-secondary)" }}>Habilita la tarifa fija de 3 horas para hoy</p>
+              </div>
+              <label className="inline-flex items-center gap-2">
+                <input type="checkbox" checked={eventActiveToday} onChange={toggleEventActive} className="h-4 w-4" />
+                <span className="text-sm" style={{ color: "var(--color-text-dark)" }}>{eventActiveToday ? "Activo" : "Inactivo"}</span>
+              </label>
+            </div>
+          </div>
           </div>
         </div>
       </main>

@@ -14,7 +14,7 @@ const MovementHistory: FC<MovementHistoryProps> = ({
   const [incomeStats, setIncomeStats] = useState<IncomeStats>({
     total: 0,
     count: 0,
-    byPaymentType: { mensual: 0, diario: 0, por_tiempo: 0 },
+    byPaymentType: { mensual: 0, diario: 0, por_tiempo: 0, evento: 0 },
     byVehicleType: { carro: 0, moto: 0 }
   });
   const [recentTransactions, setRecentTransactions] = useState<IncomeRecord[]>([]);
@@ -134,7 +134,7 @@ const MovementHistory: FC<MovementHistoryProps> = ({
       {/* Desglose por tipo de pago */}
       <div className="mb-6">
         <h3 className="text-sm font-medium text-gray-700 mb-2">Desglose por Tipo de Pago</h3>
-        <div className="grid grid-cols-3 gap-2">
+        <div className="grid grid-cols-4 gap-2">
           <div className="bg-gray-50 p-2 rounded text-center">
             <p className="text-xs text-gray-600">Mensual</p>
             <p className="font-semibold">{formatCurrency(incomeStats.byPaymentType.mensual)}</p>
@@ -146,6 +146,10 @@ const MovementHistory: FC<MovementHistoryProps> = ({
           <div className="bg-gray-50 p-2 rounded text-center">
             <p className="text-xs text-gray-600">Por Tiempo</p>
             <p className="font-semibold">{formatCurrency(incomeStats.byPaymentType.por_tiempo)}</p>
+          </div>
+          <div className="bg-gray-50 p-2 rounded text-center">
+            <p className="text-xs text-gray-600">Evento</p>
+            <p className="font-semibold">{formatCurrency(incomeStats.byPaymentType.evento)}</p>
           </div>
         </div>
       </div>

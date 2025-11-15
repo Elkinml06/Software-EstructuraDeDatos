@@ -27,6 +27,7 @@ interface ActiveVehicle {
   monthly: boolean;
   monthlyExpiryDate?: string; // Fecha de vencimiento de mensualidad
   entryTime: string;
+  event?: boolean;
 }
 
 // 🔹 Nueva interfaz para registros de ingresos
@@ -36,7 +37,7 @@ interface IncomeRecord {
   plate: string;
   vehicleType: "carro" | "moto";
   brand: string;
-  paymentType: "mensual" | "diario" | "por_tiempo";
+  paymentType: "mensual" | "diario" | "por_tiempo" | "evento";
   amount: number;
   entryTime: string;
   exitTime: string;
@@ -66,11 +67,12 @@ const VehicleForm: FC = () => {
     type: "carro" as "carro" | "moto",
     brand: "",
     monthly: false,
-    daily: false, // Nuevo campo para pago diario
+    daily: false,
+    event: false,
   });
 
   const [rates, setRates] = useState({
-    moto: { min30: 1000, hour: 1300, monthly: 60000, daily: 15000 },
+    moto: { min30: 1000, hour: 1300, monthly: 60000, daily: 15000, event: 3000 },
     car: {
       min15: 1600,
       min30: 2400,
@@ -78,11 +80,13 @@ const VehicleForm: FC = () => {
       hour: 3200,
       monthly: 100000,
       daily: 25000,
+      event: 8000,
     },
   });
 
   // Nuevo estado para mostrar el precio calculado
   const [calculatedPrice, setCalculatedPrice] = useState<number>(0);
+  const [eventActiveToday, setEventActiveToday] = useState(false);
 
   // Feedback no bloqueante, estilo platesList
   const [feedback, setFeedback] = useState<{ type: 'success' | 'error' | 'info'; message: string } | null>(null);
@@ -137,32 +141,65 @@ const VehicleForm: FC = () => {
 
       let costo = 0;
 
-      // Usar el tipo del vehículo que está dentro, no el del formulario
-      if (activeVehicle.type === "carro") {
-        if (diffMin <= 15) costo = rates.car.min15;
-        else if (diffMin <= 30) costo = rates.car.min30;
-        else if (diffMin <= 45) costo = rates.car.min45;
-        else if (diffMin <= 60) costo = rates.car.hour;
-        else {
-          const horasCompletas = Math.floor(diffMin / 60);
-          const minutosRestantes = diffMin % 60;
-          costo = horasCompletas * rates.car.hour;
-          if (minutosRestantes > 0 && minutosRestantes <= 15)
-            costo += rates.car.min15;
-          else if (minutosRestantes <= 30) costo += rates.car.min30;
-          else if (minutosRestantes <= 45) costo += rates.car.min45;
-          else costo += rates.car.hour;
+      if (activeVehicle.event) {
+        const eventFee = activeVehicle.type === "moto" ? rates.moto.event : rates.car.event;
+        if (diffMin <= 180) {
+          costo = eventFee;
+        } else {
+          const extraMin = diffMin - 180;
+          if (activeVehicle.type === "carro") {
+            if (extraMin <= 15) costo = eventFee + rates.car.min15;
+            else if (extraMin <= 30) costo = eventFee + rates.car.min30;
+            else if (extraMin <= 45) costo = eventFee + rates.car.min45;
+            else if (extraMin <= 60) costo = eventFee + rates.car.hour;
+            else {
+              const horasCompletas = Math.floor(extraMin / 60);
+              const minutosRestantes = extraMin % 60;
+              costo = eventFee + horasCompletas * rates.car.hour;
+              if (minutosRestantes > 0 && minutosRestantes <= 15) costo += rates.car.min15;
+              else if (minutosRestantes <= 30) costo += rates.car.min30;
+              else if (minutosRestantes <= 45) costo += rates.car.min45;
+              else costo += rates.car.hour;
+            }
+          } else {
+            if (extraMin <= 30) costo = eventFee + rates.moto.min30;
+            else if (extraMin <= 60) costo = eventFee + rates.moto.hour;
+            else {
+              const horasCompletas = Math.floor(extraMin / 60);
+              const minutosRestantes = extraMin % 60;
+              costo = eventFee + horasCompletas * rates.moto.hour;
+              if (minutosRestantes > 0 && minutosRestantes <= 30) costo += rates.moto.min30;
+              else if (minutosRestantes > 30) costo += rates.moto.hour;
+            }
+          }
         }
       } else {
-        if (diffMin <= 30) costo = rates.moto.min30;
-        else if (diffMin <= 60) costo = rates.moto.hour;
-        else {
-          const horasCompletas = Math.floor(diffMin / 60);
-          const minutosRestantes = diffMin % 60;
-          costo = horasCompletas * rates.moto.hour;
-          if (minutosRestantes > 0 && minutosRestantes <= 30)
-            costo += rates.moto.min30;
-          else if (minutosRestantes > 30) costo += rates.moto.hour;
+        if (activeVehicle.type === "carro") {
+          if (diffMin <= 15) costo = rates.car.min15;
+          else if (diffMin <= 30) costo = rates.car.min30;
+          else if (diffMin <= 45) costo = rates.car.min45;
+          else if (diffMin <= 60) costo = rates.car.hour;
+          else {
+            const horasCompletas = Math.floor(diffMin / 60);
+            const minutosRestantes = diffMin % 60;
+            costo = horasCompletas * rates.car.hour;
+            if (minutosRestantes > 0 && minutosRestantes <= 15)
+              costo += rates.car.min15;
+            else if (minutosRestantes <= 30) costo += rates.car.min30;
+            else if (minutosRestantes <= 45) costo += rates.car.min45;
+            else costo += rates.car.hour;
+          }
+        } else {
+          if (diffMin <= 30) costo = rates.moto.min30;
+          else if (diffMin <= 60) costo = rates.moto.hour;
+          else {
+            const horasCompletas = Math.floor(diffMin / 60);
+            const minutosRestantes = diffMin % 60;
+            costo = horasCompletas * rates.moto.hour;
+            if (minutosRestantes > 0 && minutosRestantes <= 30)
+              costo += rates.moto.min30;
+            else if (minutosRestantes > 30) costo += rates.moto.hour;
+          }
         }
       }
 
@@ -179,9 +216,13 @@ const VehicleForm: FC = () => {
       return form.type === "moto" ? rates.moto.daily : rates.car.daily;
     }
 
+    if (form.event && eventActiveToday) {
+      return form.type === "moto" ? rates.moto.event : rates.car.event;
+    }
+
     // Si es entrada nueva sin mensualidad ni diario, no mostrar precio
     return 0;
-  }, [form.plate, form.type, form.monthly, form.daily, activeVehicles, rates]);
+  }, [form.plate, form.type, form.monthly, form.daily, form.event, eventActiveToday, activeVehicles, rates]);
 
   // Actualizar precio calculado cuando cambien los datos relevantes
   useEffect(() => {
@@ -246,6 +287,7 @@ const VehicleForm: FC = () => {
             hour: parsed.moto.hour,
             monthly: parsed.moto.monthly,
             daily: parsed.moto.daily,
+            event: parsed.moto.event ?? 3000,
           },
           car: {
             min15: parsed.car.min15,
@@ -254,9 +296,13 @@ const VehicleForm: FC = () => {
             hour: parsed.car.hour,
             monthly: parsed.car.monthly,
             daily: parsed.car.daily,
+            event: parsed.car.event ?? 8000,
           },
         });
       }
+
+      const evKey = localStorage.getItem("eventActiveDateKey");
+      setEventActiveToday(evKey === getDateKey());
 
       // Marcar que los datos se han cargado
       setIsDataLoaded(true);
@@ -286,12 +332,13 @@ const VehicleForm: FC = () => {
         }
       } else if (e.key === "parkingRates" && e.newValue) {
         const parsed = JSON.parse(e.newValue);
-        setRates({
+        setRates((prev) => ({
           moto: {
             min30: parsed.moto.min30,
             hour: parsed.moto.hour,
             monthly: parsed.moto.monthly,
             daily: parsed.moto.daily,
+            event: parsed.moto.event ?? prev.moto.event,
           },
           car: {
             min15: parsed.car.min15,
@@ -300,8 +347,11 @@ const VehicleForm: FC = () => {
             hour: parsed.car.hour,
             monthly: parsed.car.monthly,
             daily: parsed.car.daily,
+            event: parsed.car.event ?? prev.car.event,
           },
-        });
+        }));
+      } else if (e.key === "eventActiveDateKey") {
+        setEventActiveToday((e.newValue ?? "") === getDateKey());
       }
     };
 
@@ -319,12 +369,13 @@ const VehicleForm: FC = () => {
       const savedRates = localStorage.getItem("parkingRates");
       if (savedRates) {
         const parsed = JSON.parse(savedRates);
-        setRates({
+        setRates((prev) => ({
           moto: {
             min30: parsed.moto.min30,
             hour: parsed.moto.hour,
             monthly: parsed.moto.monthly,
             daily: parsed.moto.daily,
+            event: parsed.moto.event ?? prev.moto.event,
           },
           car: {
             min15: parsed.car.min15,
@@ -333,8 +384,9 @@ const VehicleForm: FC = () => {
             hour: parsed.car.hour,
             monthly: parsed.car.monthly,
             daily: parsed.car.daily,
+            event: parsed.car.event ?? prev.car.event,
           },
-        });
+        }));
       }
     };
     window.addEventListener("focus", onFocus);
@@ -394,6 +446,7 @@ const VehicleForm: FC = () => {
         brand: "",
         monthly: false,
         daily: false,
+        event: false,
       });
       refocusPlateInput();
       return;
@@ -440,6 +493,7 @@ const VehicleForm: FC = () => {
         brand: "",
         monthly: false,
         daily: false,
+        event: false,
       });
       refocusPlateInput();
       return;
@@ -464,6 +518,7 @@ const VehicleForm: FC = () => {
           brand: currentData.brand,
           monthly: activeVehicle.monthly,
           daily: false,
+          event: false,
         });
         return;
       }
@@ -477,6 +532,7 @@ const VehicleForm: FC = () => {
         brand: currentData.brand,
         monthly: activeVehicle.monthly, // Mantener el estado de mensualidad del vehículo activo
         daily: false,
+        event: false,
       };
 
       setForm(finalFormData);
@@ -487,13 +543,14 @@ const VehicleForm: FC = () => {
     if (registeredVehicle) {
       // 🔹 Pago diario vigente: no limpiar, solo mostrar estado en UI
       if (hasDailyPaymentToday(upper)) {
-        const reEntryFormData = {
-          plate: upper,
-          type: registeredVehicle.type,
-          brand: registeredVehicle.brand,
-          monthly: false,
-          daily: false,
-        };
+      const reEntryFormData = {
+        plate: upper,
+        type: registeredVehicle.type,
+        brand: registeredVehicle.brand,
+        monthly: false,
+        daily: false,
+        event: false,
+      };
         setForm(reEntryFormData);
         // Continuar para que la UI muestre el mensaje de bloqueo y estilos
       }
@@ -517,6 +574,7 @@ const VehicleForm: FC = () => {
           brand: registeredVehicle.brand,
           monthly: false,
           daily: false,
+          event: false,
         });
         // Recuperar foco tras el feedback
         refocusPlateInput();
@@ -530,6 +588,7 @@ const VehicleForm: FC = () => {
         brand: registeredVehicle.brand,
         monthly: false, // No marcar mensualidad para re-entrada normal
         daily: false,
+        event: false,
       };
 
       setForm(reEntryFormData);
@@ -556,6 +615,7 @@ const VehicleForm: FC = () => {
           brand: "",
           monthly: false,
           daily: false,
+          event: false,
         });
         // No retornar; permitir que el usuario cambie la placa si desea
       }
@@ -565,6 +625,7 @@ const VehicleForm: FC = () => {
         brand: "",
         monthly: false,
         daily: false,
+        event: false,
       };
 
       setForm(newVehicleFormData);
@@ -583,8 +644,7 @@ const VehicleForm: FC = () => {
       <html>
         <body style="font-family: monospace; font-size: 12px; padding: 10px; width: 58mm;">
           <div style="text-align:center;">
-            <h3>🅿️ PARQUEADERO ELKIN MOTORS</h3>
-            <p>Propietario: Elkin Mendoza</p>
+            <h3>🅿️ 256 PARKING</h3>
             <p>${fecha}</p>
             <hr/>
           </div>
@@ -620,7 +680,7 @@ const VehicleForm: FC = () => {
           <hr/>
           <div style="text-align:center;">
             <p>¡Gracias por preferirnos!</p>
-            <p>🌐 Elkin Motors</p>
+            <p>🌐 256 PARKING</p>
           </div>
         </body>
       </html>
@@ -678,7 +738,7 @@ const VehicleForm: FC = () => {
       plate: vehicle.plate,
       vehicleType: vehicle.type,
       brand: vehicle.brand,
-      paymentType: vehicle.monthly ? "mensual" : "por_tiempo",
+      paymentType: vehicle.monthly ? "mensual" : (vehicle.event ? "evento" : "por_tiempo"),
       amount: amount,
       entryTime: vehicle.entryTime,
       exitTime: exitTime.toISOString(),
@@ -704,6 +764,30 @@ const VehicleForm: FC = () => {
       vehicleType: type,
       brand,
       paymentType: "diario",
+      amount,
+      entryTime: now.toISOString(),
+      exitTime: now.toISOString(),
+      duration: 0,
+    };
+    setIncomeRecords((prev) => [...prev, newIncomeRecord]);
+    return newIncomeRecord;
+  };
+
+  // 🔹 Registro de ingreso por pago mensual (sin entrada/salida)
+  const createMonthlyIncomeRecord = (
+    plate: string,
+    type: "carro" | "moto",
+    brand: string,
+    amount: number
+  ) => {
+    const now = new Date();
+    const newIncomeRecord: IncomeRecord = {
+      id: `income_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      date: now.toISOString(),
+      plate,
+      vehicleType: type,
+      brand,
+      paymentType: "mensual",
       amount,
       entryTime: now.toISOString(),
       exitTime: now.toISOString(),
@@ -762,6 +846,39 @@ const VehicleForm: FC = () => {
           activeVehicle.type === "moto"
             ? rates.moto.monthly
             : rates.car.monthly;
+      } else if (activeVehicle.event) {
+        const diffMin = Math.ceil(diffMinutes);
+        const eventFee = activeVehicle.type === "moto" ? rates.moto.event : rates.car.event;
+        if (diffMin <= 180) {
+          preliminaryPrice = eventFee;
+        } else {
+          const extraMin = diffMin - 180;
+          if (activeVehicle.type === "carro") {
+            if (extraMin <= 15) preliminaryPrice = eventFee + rates.car.min15;
+            else if (extraMin <= 30) preliminaryPrice = eventFee + rates.car.min30;
+            else if (extraMin <= 45) preliminaryPrice = eventFee + rates.car.min45;
+            else if (extraMin <= 60) preliminaryPrice = eventFee + rates.car.hour;
+            else {
+              const horasCompletas = Math.floor(extraMin / 60);
+              const minutosRestantes = extraMin % 60;
+              preliminaryPrice = eventFee + horasCompletas * rates.car.hour;
+              if (minutosRestantes > 0 && minutosRestantes <= 15) preliminaryPrice += rates.car.min15;
+              else if (minutosRestantes <= 30) preliminaryPrice += rates.car.min30;
+              else if (minutosRestantes <= 45) preliminaryPrice += rates.car.min45;
+              else preliminaryPrice += rates.car.hour;
+            }
+          } else {
+            if (extraMin <= 30) preliminaryPrice = eventFee + rates.moto.min30;
+            else if (extraMin <= 60) preliminaryPrice = eventFee + rates.moto.hour;
+            else {
+              const horasCompletas = Math.floor(extraMin / 60);
+              const minutosRestantes = extraMin % 60;
+              preliminaryPrice = eventFee + horasCompletas * rates.moto.hour;
+              if (minutosRestantes > 0 && minutosRestantes <= 30) preliminaryPrice += rates.moto.min30;
+              else if (minutosRestantes > 30) preliminaryPrice += rates.moto.hour;
+            }
+          }
+        }
       } else {
         const diffMin = Math.ceil(diffMinutes);
         if (activeVehicle.type === "carro") {
@@ -810,7 +927,7 @@ const VehicleForm: FC = () => {
         `Entrada: ${entryTime.toLocaleString("es-CO")}\n` +
         `Tiempo: ${timeDisplay}\n` +
         `${
-          activeVehicle.monthly ? "Tipo: MENSUALIDAD" : "Tipo: Por tiempo"
+          activeVehicle.monthly ? "Tipo: MENSUALIDAD" : activeVehicle.event ? "Tipo: Evento" : "Tipo: Por tiempo"
         }\n` +
         `Total a pagar: $${preliminaryPrice.toLocaleString("es-CO")}\n\n` +
         `¿Confirmar salida y generar recibo?`;
@@ -829,6 +946,41 @@ const VehicleForm: FC = () => {
           activeVehicle.type === "moto"
             ? rates.moto.monthly
             : rates.car.monthly;
+      } else if (activeVehicle.event) {
+        const diffMin = Math.ceil(diffMinutes);
+        const eventFee = activeVehicle.type === "moto" ? rates.moto.event : rates.car.event;
+        if (diffMin <= 180) {
+          total = eventFee;
+        } else {
+          const extraMin = diffMin - 180;
+          let extra = 0;
+          if (activeVehicle.type === "carro") {
+            if (extraMin <= 15) extra = rates.car.min15;
+            else if (extraMin <= 30) extra = rates.car.min30;
+            else if (extraMin <= 45) extra = rates.car.min45;
+            else if (extraMin <= 60) extra = rates.car.hour;
+            else {
+              const horasCompletas = Math.floor(extraMin / 60);
+              const minutosRestantes = extraMin % 60;
+              extra = horasCompletas * rates.car.hour;
+              if (minutosRestantes > 0 && minutosRestantes <= 15) extra += rates.car.min15;
+              else if (minutosRestantes <= 30) extra += rates.car.min30;
+              else if (minutosRestantes <= 45) extra += rates.car.min45;
+              else extra += rates.car.hour;
+            }
+          } else {
+            if (extraMin <= 30) extra = rates.moto.min30;
+            else if (extraMin <= 60) extra = rates.moto.hour;
+            else {
+              const horasCompletas = Math.floor(extraMin / 60);
+              const minutosRestantes = extraMin % 60;
+              extra = horasCompletas * rates.moto.hour;
+              if (minutosRestantes > 0 && minutosRestantes <= 30) extra += rates.moto.min30;
+              else if (minutosRestantes > 30) extra += rates.moto.hour;
+            }
+          }
+          total = eventFee + extra;
+        }
       } else {
         // Calcular según tiempo transcurrido usando la nueva estructura de precios
         const diffMin = Math.ceil(diffMinutes);
@@ -914,6 +1066,7 @@ const VehicleForm: FC = () => {
         brand: "",
         monthly: false,
         daily: false,
+        event: false,
       });
       refocusPlateInput();
       return;
@@ -983,7 +1136,56 @@ const VehicleForm: FC = () => {
       printReceipt(tempVehicleForPrint, false, "Pago diario");
 
       // Reiniciar formulario sin crear vehículo activo
-      setForm({ plate: "", type: "carro", brand: "", monthly: false, daily: false });
+      setForm({ plate: "", type: "carro", brand: "", monthly: false, daily: false, event: false });
+      setForm((prev) => ({ ...prev, event: false }));
+      refocusPlateInput();
+      return;
+    }
+
+    // 🔹 Si es pago mensual: registrar pago y bloquear por el período (no crear entrada)
+    if (form.monthly) {
+      // 1) Actualizar/crear registro histórico de vehículo (tipo/marca) y mensualidad
+      const existsInRegistry = vehicleRegistry.find((v) => v.plate === plate);
+      if (!existsInRegistry) {
+        const newRegistryEntry: VehicleRegistry = {
+          plate,
+          type: form.type,
+          brand: form.brand,
+          monthlyExpiryDate,
+        };
+        setVehicleRegistry([...vehicleRegistry, newRegistryEntry]);
+      } else {
+        const updatedRegistry = vehicleRegistry.map((v) =>
+          v.plate === plate
+            ? { ...v, type: form.type, brand: form.brand, monthlyExpiryDate }
+            : v
+        );
+        setVehicleRegistry(updatedRegistry);
+      }
+
+      // 2) Crear ingreso de tipo mensual
+      const amount = form.type === "moto" ? rates.moto.monthly : rates.car.monthly;
+      createMonthlyIncomeRecord(plate, form.type, form.brand, amount);
+
+      // 3) Confirmar registro exitoso
+      showFeedback('success', 'Vehículo registrado correctamente ✅');
+
+      // 4) Imprimir comprobante de pago mensual
+      const nowIso = new Date().toISOString();
+      const tempVehicleForPrint: Vehicle = {
+        plate,
+        type: form.type,
+        brand: form.brand,
+        monthly: true,
+        status: "dentro",
+        entryTime: nowIso,
+        exitTime: null,
+        price: amount,
+      };
+      printReceipt(tempVehicleForPrint, false, "Pago mensual");
+
+      // Reiniciar formulario sin crear vehículo activo
+      setForm({ plate: "", type: "carro", brand: "", monthly: false, daily: false, event: false });
       refocusPlateInput();
       return;
     }
@@ -1023,6 +1225,7 @@ const VehicleForm: FC = () => {
       brand: form.brand,
       monthly: form.monthly,
       monthlyExpiryDate,
+      event: form.event && eventActiveToday,
       entryTime: new Date().toISOString(),
     };
     setActiveVehicles([...activeVehicles, newActiveVehicle]);
@@ -1043,7 +1246,7 @@ const VehicleForm: FC = () => {
     showFeedback('success', 'Vehículo registrado correctamente ✅');
 
     // Imprimir comprobante de entrada
-    printReceipt(newVehicle, false);
+    printReceipt(newVehicle, false, form.monthly ? "Pago mensual" : undefined);
 
     // Reiniciar formulario
     setForm({
@@ -1052,6 +1255,7 @@ const VehicleForm: FC = () => {
       brand: "",
       monthly: false,
       daily: false,
+      event: false,
     });
     // Recuperar el foco para permitir seguir escribiendo inmediatamente
     refocusPlateInput();
@@ -1340,6 +1544,7 @@ const VehicleForm: FC = () => {
                     ...prev,
                     monthly: e.target.checked,
                     daily: false,
+                    event: false,
                   }))
                 }
                 className="h-4 w-4 rounded"
@@ -1369,6 +1574,7 @@ const VehicleForm: FC = () => {
                     ...prev,
                     daily: e.target.checked,
                     monthly: false,
+                    event: false,
                   }))
                 }
                 className="h-4 w-4 rounded"
@@ -1387,6 +1593,37 @@ const VehicleForm: FC = () => {
                 }}
               >
                 Pago Diario
+              </label>
+            </div>
+            <div className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                checked={form.event}
+                onChange={(e) =>
+                  setForm((prev) => ({
+                    ...prev,
+                    event: e.target.checked,
+                    monthly: false,
+                    daily: false,
+                  }))
+                }
+                disabled={!eventActiveToday || !!vehicleInside || hasValidMonthly || hasValidDaily}
+                className="h-4 w-4 rounded"
+                style={{
+                  borderColor: "var(--color-gray-dark)",
+                  accentColor: "var(--color-black)",
+                }}
+              />
+              <label
+                className="text-sm"
+                style={{
+                  color:
+                    vehicleInside || !eventActiveToday || hasValidMonthly || hasValidDaily
+                      ? "var(--color-text-secondary)"
+                      : "var(--color-text-dark)",
+                }}
+              >
+                Día especial / Evento
               </label>
             </div>
           </div>

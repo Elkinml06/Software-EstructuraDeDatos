@@ -6,7 +6,7 @@ export interface IncomeRecord {
   plate: string;
   vehicleType: "carro" | "moto";
   brand: string;
-  paymentType: "mensual" | "diario" | "por_tiempo";
+  paymentType: "mensual" | "diario" | "por_tiempo" | "evento";
   amount: number;
   entryTime: string;
   exitTime: string;
@@ -20,6 +20,7 @@ export interface IncomeStats {
     mensual: number;
     diario: number;
     por_tiempo: number;
+    evento: number;
   };
   byVehicleType: {
     carro: number;
@@ -111,7 +112,8 @@ const calculateStats = (records: IncomeRecord[]): IncomeStats => {
     byPaymentType: {
       mensual: 0,
       diario: 0,
-      por_tiempo: 0
+      por_tiempo: 0,
+      evento: 0
     },
     byVehicleType: {
       carro: 0,
