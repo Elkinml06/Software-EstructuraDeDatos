@@ -686,42 +686,27 @@ const VehicleForm: FC = () => {
       </html>
     `;
 
-    // Crear ventana temporal para imprimir directamente
+    // Imprimir vía Electron de forma silenciosa si está disponible
+    if (window.ipcRenderer) {
+      window.ipcRenderer
+        .invoke("print-receipt", content)
+        .finally(() => {
+          refocusPlateInput();
+        });
+      return;
+    }
+
+    // Fallback a impresión del navegador si no hay contexto Electron
     const printWindow = window.open("", "_blank", "width=400,height=600");
     if (printWindow) {
       printWindow.document.write(content);
       printWindow.document.close();
-      const afterPrint = () => {
-        try {
-          printWindow.removeEventListener("afterprint", afterPrint);
-        } catch (err) {
-          void 0; // noop
-        }
-        try {
-          printWindow.close();
-        } catch (err) {
-          void 0; // noop
-        }
-        // Recuperar foco de la ventana principal y del input de placa
-        refocusPlateInput();
-      };
-      // Intentar cerrar y refocar después de imprimir
-      try {
-        printWindow.addEventListener("afterprint", afterPrint);
-      } catch (err) {
-        void 0; // noop
-      }
       printWindow.focus();
       printWindow.print();
-      // Fallback por si afterprint no dispara
       setTimeout(() => {
-        try {
-          printWindow.close();
-        } catch (err) {
-          void 0; // noop
-        }
+        try { printWindow.close(); } catch { void 0; }
         refocusPlateInput();
-      }, 1000);
+      }, 500);
     }
   };
 
