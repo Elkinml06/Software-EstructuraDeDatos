@@ -25,6 +25,7 @@ const CashDashboard: FC<CashDashboardProps> = ({ onLogout }) => {
   const [mostrarRetiro, setMostrarRetiro] = useState(false);
   const [retiroMonto, setRetiroMonto] = useState<string>("");
   const [retiroNota, setRetiroNota] = useState<string>("");
+  const [retiroError, setRetiroError] = useState<string | null>(null);
 
   const showFeedback = (type: 'success' | 'error' | 'info', message: string) => {
     setFeedback({ type, message });
@@ -85,12 +86,18 @@ const CashDashboard: FC<CashDashboardProps> = ({ onLogout }) => {
 
   const handleWithdrawCash = () => {
     setMostrarRetiro(true);
+    setRetiroError(null);
   };
 
   const handleConfirmWithdraw = () => {
     const amount = Number(retiroMonto);
     if (isNaN(amount) || amount <= 0) {
-      showFeedback('error', 'Monto inválido');
+      setRetiroError('Monto inválido');
+      return;
+    }
+    const currentCash = computeCashOnHand();
+    if (amount > currentCash) {
+      setRetiroError('Fondos insuficientes');
       return;
     }
     const note = retiroNota && retiroNota.trim().length > 0 ? retiroNota.trim() : 'Retiro de caja';
@@ -98,6 +105,7 @@ const CashDashboard: FC<CashDashboardProps> = ({ onLogout }) => {
     setMostrarRetiro(false);
     setRetiroMonto("");
     setRetiroNota("");
+    setRetiroError(null);
     recomputeCash();
     showFeedback('success', 'Retiro registrado');
   };
@@ -106,6 +114,7 @@ const CashDashboard: FC<CashDashboardProps> = ({ onLogout }) => {
     setMostrarRetiro(false);
     setRetiroMonto("");
     setRetiroNota("");
+    setRetiroError(null);
   };
 
   return (
@@ -162,10 +171,11 @@ const CashDashboard: FC<CashDashboardProps> = ({ onLogout }) => {
         mostrar={mostrarRetiro}
         monto={retiroMonto}
         nota={retiroNota}
-        onMontoChange={setRetiroMonto}
+        onMontoChange={(v) => { setRetiroMonto(v); if (retiroError) setRetiroError(null); }}
         onNotaChange={setRetiroNota}
         onConfirmar={handleConfirmWithdraw}
         onCerrar={handleCerrarRetiro}
+        errorMessage={retiroError || undefined}
       />
     </div>
   );

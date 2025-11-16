@@ -8,6 +8,7 @@ interface WithdrawCashModalProps {
   onNotaChange: (nota: string) => void;
   onConfirmar: () => void;
   onCerrar: () => void;
+  errorMessage?: string;
 }
 
 const WithdrawCashModal: FC<WithdrawCashModalProps> = ({
@@ -18,6 +19,7 @@ const WithdrawCashModal: FC<WithdrawCashModalProps> = ({
   onNotaChange,
   onConfirmar,
   onCerrar,
+  errorMessage,
 }) => {
   if (!mostrar) return null;
 
@@ -25,6 +27,11 @@ const WithdrawCashModal: FC<WithdrawCashModalProps> = ({
     <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
       <div className="bg-white rounded-lg shadow-lg w-full max-w-sm p-6">
         <h3 className="text-lg font-semibold text-gray-900 mb-4">Entregar dinero</h3>
+        {errorMessage && (
+          <div className="mb-4 p-3 rounded-md text-sm bg-red-100 text-red-800">
+            {errorMessage}
+          </div>
+        )}
         <div className="space-y-4">
           <div>
             <p className="text-sm text-gray-600">Monto a retirar:</p>
