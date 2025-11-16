@@ -47,6 +47,10 @@ La aplicación resuelve la problemática de registros manuales dispersos y cálc
   ```
   Genera el instalador `.exe` en `dist/`.
 
+## Descargas
+
+- Descargar instalador para Windows: [Releases (última versión)](https://github.com/Elkinml06/Software-EstructuraDeDatos/releases/latest)
+
 
 ## Estructura del proyecto
 La estructura puede variar según la configuración, pero típicamente:
@@ -71,5 +75,5 @@ La estructura puede variar según la configuración, pero típicamente:
 - **Juan Sebastián Suárez Pava** – U00182794
 
 ## Licencia
-Este proyecto se distribuye bajo la licencia **MIT** 
+Este proyecto se distribuye bajo la licencia **MIT**
 
