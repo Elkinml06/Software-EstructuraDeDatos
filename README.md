@@ -24,58 +24,29 @@ La aplicación resuelve la problemática de registros manuales dispersos y cálc
 - **Interfaz moderna e intuitiva**: diseño enfocado en productividad, accesos directos y estados claros.
 - **Filtros y reportes**: búsqueda por placa, rango de tiempo, tipo de vehículo y estado.
 
-## Instalación y ejecución
+## Inicio rápido
 
-### Requisitos previos
-- **Node.js** 18 LTS o superior
-- **Git**
-- Gestor de paquetes: **npm** (o **pnpm/yarn**, según preferencia)
+- Requisitos: `Node.js 18+`, `Git`, Windows (para instalador NSIS).
+- Clonar:
+  ```bash
+  git clone https://github.com/Elkinml06/Software-EstructuraDeDatos.git
+  cd Software-EstructuraDeDatos
+  ```
+- Instalar dependencias:
+  ```bash
+  npm install
+  ```
+- Desarrollo:
+  ```bash
+  npm run dev
+  ```
+  Inicia el entorno de desarrollo con Electron + Vite.
+- Build / Instalador (Windows):
+  ```bash
+  npm run build
+  ```
+  Genera el instalador `.exe` en `dist/`.
 
-### Clonar el repositorio
-```bash
-git clone https://github.com/<organizacion>/<repositorio>.git
-cd <repositorio>
-```
-
-### Instalar dependencias
-```bash
-npm install
-```
-
-### Desarrollo
-Existen distintas configuraciones posibles. En la mayoría de los entornos Electron + Vite se utiliza uno de los siguientes flujos:
-
-1) **Un solo comando** (si el `package.json` lo orquesta):
-```bash
-npm run dev
-```
-Esto levanta el render con Vite y ejecuta Electron apuntando al servidor de desarrollo.
-
-2) **Dos terminales** (renderer y main por separado):
-```bash
-# Terminal A: render (React + Vite)
-npm run dev
-
-# Terminal B: proceso principal (Electron)
-npm exec electron .
-```
-
-### Build / Instalador
-Dependiendo de la herramienta usada para empaquetar (por ejemplo **electron-builder** o **Electron Forge**), utilice alguno de estos comandos estándar:
-
-- Con electron-builder:
-```bash
-npm run build       # build del frontend (Vite)
-npm run dist        # genera instaladores / binarios
-```
-
-- Con Electron Forge:
-```bash
-npm run build       # build del frontend (Vite)
-npm run make        # genera instaladores / binarios
-```
-
-Revise el `package.json` del proyecto para confirmar los scripts disponibles y adaptarlos a su entorno.
 
 ## Estructura del proyecto
 La estructura puede variar según la configuración, pero típicamente:
@@ -100,4 +71,5 @@ La estructura puede variar según la configuración, pero típicamente:
 - **Juan Sebastián Suárez Pava** – U00182794
 
 ## Licencia
-Este proyecto se distribuye bajo la licencia **MIT** (recomendada para proyectos abiertos y colaborativos). Puede adaptar a otra licencia estándar según necesidades específicas.
+Este proyecto se distribuye bajo la licencia **MIT** 
+
