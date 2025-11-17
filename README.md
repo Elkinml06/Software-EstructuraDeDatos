@@ -72,7 +72,7 @@ La estructura puede variar según la configuración, pero típicamente:
 ## Autores
 - **Elkin Mendoza López** – U00182176
 - **Juan Camilo Caballero López** – U00181396
-- **Juan Sebastián Suárez Pava** – U00182794
+- **Juan Sebastián Suárez Pava** – U00182917
 
 ## Licencia
 Este proyecto se distribuye bajo la licencia **MIT**
